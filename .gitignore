@@ -1,0 +1,5 @@
+/target
+.shuttle-storage
+Secrets*.toml
+.idea
+Cargo.lock
