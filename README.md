@@ -1,7 +1,7 @@
 <https://github.com/tokio-rs/axum>
-# Axum Todo App
+# Axum Service
 
-This is a simple Todo application built using the Axum framework, which is a web framework for Rust.
+This is a simple Todo application built using the Axum framework, which is a web framework for Rust (Top microservices framework for Rust Languages, As of 2024).
 
 ## Features
 
@@ -16,6 +16,3 @@ This is a simple Todo application built using the Axum framework, which is a web
 - Rust and Cargo installed
 - PostgreSQL installed and running
 
-### Installation
-
-1. Clone the repository:
