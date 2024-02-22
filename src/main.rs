@@ -1,3 +1,5 @@
+use axum::http::header::{ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION};
+use axum::http::{HeaderValue, Method};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -5,14 +7,13 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use axum::http::header::{ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION};
-use axum::http::{HeaderValue, Method};
 use serde::{Deserialize, Serialize};
 use shuttle_runtime::CustomError;
 use sqlx::{FromRow, PgPool};
-use tower_http::cors::{CorsLayer};
+use tower_http::cors::CorsLayer;
+
 async fn retrieve(
-    Path(id): Path<i32>,
+    Path(id): Path<i64>,
     State(state): State<MyState>,
 ) -> Result<impl IntoResponse, impl IntoResponse> {
     match sqlx::query_as::<_, Todo>("SELECT * FROM TODO WHERE id = $1")
@@ -25,7 +26,9 @@ async fn retrieve(
     }
 }
 
-async fn bulk_retreive(State(state): State<MyState>,)->Result<impl IntoResponse, impl IntoResponse> {
+async fn bulk_retreive(
+    State(state): State<MyState>,
+) -> Result<impl IntoResponse, impl IntoResponse> {
     match sqlx::query_as::<_, Todo>("SELECT * FROM TODO")
         .fetch_all(&state.pool)
         .await
@@ -68,9 +71,9 @@ async fn axum(#[shuttle_shared_db::Postgres] pool: PgPool) -> shuttle_axum::Shut
         .route("/todos", get(bulk_retreive))
         .layer(
             CorsLayer::new()
-                .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap(),)
+                .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
                 .allow_methods(vec![Method::GET, Method::POST]) // Specify the allowed HTTP methods
-                .allow_headers(vec![AUTHORIZATION, ACCEPT,ACCESS_CONTROL_ALLOW_ORIGIN]) // Specify the allowed request headers
+                .allow_headers(vec![AUTHORIZATION, ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN]), // Specify the allowed request headers
         )
         .with_state(state);
 
