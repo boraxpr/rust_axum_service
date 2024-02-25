@@ -5,13 +5,10 @@ edition = "2021"
 
 [dependencies]
 axum = "0.7.3"
-shuttle-axum = "0.38.0"
-shuttle-runtime = "0.38.0"
-tokio = "1.28.2"
+tokio = {version="1.28.2", features = ["full"]}
 tracing = "0.1.40"
 serde = { version = "1.0.196", features = ["derive"] }
 uuid = { version = "1.7.0", features = ["v4"] }
 tracing-subscriber = "0.3.18"
-shuttle-shared-db= { version = "0.38.0", features = ["postgres","sqlx"] }
-sqlx = "0.7.3"
+sqlx = { version = "0.7.3", features = ["postgres", "runtime-tokio-rustls"] }
 tower-http = { version = "0.5.1", features = ["cors"] }

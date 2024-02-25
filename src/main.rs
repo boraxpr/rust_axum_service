@@ -8,7 +8,7 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use shuttle_runtime::CustomError;
+use sqlx::postgres::PgPoolOptions;
 use sqlx::{FromRow, PgPool};
 use tower_http::cors::CorsLayer;
 
@@ -57,12 +57,17 @@ struct MyState {
     pool: PgPool,
 }
 
-#[shuttle_runtime::main]
-async fn axum(#[shuttle_shared_db::Postgres] pool: PgPool) -> shuttle_axum::ShuttleAxum {
-    sqlx::migrate!("./migrations")
-        .run(&pool)
+#[tokio::main]
+async fn main() {
+    // sqlx::migrate!("./migrations")
+    //     .run(&pool)
+    //     .await
+    //     .map_err(CustomError::new)?;
+    let pool = PgPoolOptions::new()
+        .max_connections(2)
+        .connect("postgresql://root:6501@host.docker.internal:5432/root")
         .await
-        .map_err(CustomError::new)?;
+        .unwrap();
 
     let state = MyState { pool };
     let router = Router::new()
@@ -77,7 +82,8 @@ async fn axum(#[shuttle_shared_db::Postgres] pool: PgPool) -> shuttle_axum::Shut
         )
         .with_state(state);
 
-    Ok(router.into())
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:7070").await.unwrap();
+    axum::serve(listener, router).await.unwrap();
 }
 
 #[derive(Deserialize)]
