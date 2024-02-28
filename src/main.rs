@@ -14,11 +14,11 @@ use tower_http::cors::CorsLayer;
 
 async fn retrieve(
     Path(id): Path<i64>,
-    State(state): State<MyState>,
+    State(pool): State<PgPool>,
 ) -> Result<impl IntoResponse, impl IntoResponse> {
     match sqlx::query_as::<_, Todo>("SELECT * FROM TODO WHERE id = $1")
         .bind(id)
-        .fetch_one(&state.pool)
+        .fetch_one(&pool)
         .await
     {
         Ok(todo) => Ok((StatusCode::OK, Json(todo))),
@@ -26,11 +26,9 @@ async fn retrieve(
     }
 }
 
-async fn bulk_retreive(
-    State(state): State<MyState>,
-) -> Result<impl IntoResponse, impl IntoResponse> {
+async fn bulk_retreive(State(pool): State<PgPool>) -> Result<impl IntoResponse, impl IntoResponse> {
     match sqlx::query_as::<_, Todo>("SELECT * FROM TODO")
-        .fetch_all(&state.pool)
+        .fetch_all(&pool)
         .await
     {
         Ok(todos) => Ok((StatusCode::OK, Json(todos))),
@@ -39,12 +37,12 @@ async fn bulk_retreive(
 }
 
 async fn add(
-    State(state): State<MyState>,
+    State(pool): State<PgPool>,
     Json(data): Json<TodoNew>,
 ) -> Result<impl IntoResponse, impl IntoResponse> {
     match sqlx::query_as::<_, Todo>("INSERT INTO TODO (note) VALUES ($1) RETURNING id, note")
         .bind(&data.note)
-        .fetch_one(&state.pool)
+        .fetch_one(&pool)
         .await
     {
         Ok(todo) => Ok((StatusCode::CREATED, Json(todo))),
@@ -52,10 +50,10 @@ async fn add(
     }
 }
 
-#[derive(Clone)]
-struct MyState {
-    pool: PgPool,
-}
+// #[derive(Clone)]
+// struct MyState {
+//     pool: PgPool,
+// }
 
 #[tokio::main]
 async fn main() {
@@ -69,7 +67,6 @@ async fn main() {
         .await
         .unwrap();
 
-    let state = MyState { pool };
     let router = Router::new()
         .route("/create_todo", post(add))
         .route("/todos/:id", get(retrieve))
@@ -77,10 +74,10 @@ async fn main() {
         .layer(
             CorsLayer::new()
                 .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
-                .allow_methods(vec![Method::GET, Method::POST]) // Specify the allowed HTTP methods
-                .allow_headers(vec![AUTHORIZATION, ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN]), // Specify the allowed request headers
+                .allow_methods([Method::GET, Method::POST]) // Specify the allowed HTTP methods
+                .allow_headers([AUTHORIZATION, ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN]), // Specify the allowed request headers
         )
-        .with_state(state);
+        .with_state(pool);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:7070").await.unwrap();
     axum::serve(listener, router).await.unwrap();
