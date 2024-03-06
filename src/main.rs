@@ -1,3 +1,5 @@
+use std::env;
+use dotenv::dotenv;
 use axum::http::header::{ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION};
 use axum::http::{HeaderValue, Method};
 use axum::{
@@ -50,22 +52,21 @@ async fn add(
     }
 }
 
-// #[derive(Clone)]
-// struct MyState {
-//     pool: PgPool,
-// }
-
 #[tokio::main]
 async fn main() {
-    // sqlx::migrate!("./migrations")
-    //     .run(&pool)
-    //     .await
-    //     .map_err(CustomError::new)?;
+    dotenv().ok();
+
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
     let pool = PgPoolOptions::new()
         .max_connections(2)
-        .connect("postgresql://root:6501@host.docker.internal:5432/root")
+        .connect(&database_url)
         .await
         .unwrap();
+
+        sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await.unwrap();
 
     let router = Router::new()
         .route("/create_todo", post(add))

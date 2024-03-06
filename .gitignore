@@ -3,3 +3,4 @@
 Secrets*.toml
 .idea
 Cargo.lock
+.env
