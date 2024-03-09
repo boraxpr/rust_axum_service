@@ -1,5 +1,3 @@
-use std::env;
-use dotenv::dotenv;
 use axum::http::header::{ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION};
 use axum::http::{HeaderValue, Method};
 use axum::{
@@ -9,9 +7,11 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{FromRow, PgPool};
+use std::env;
 use tower_http::cors::CorsLayer;
 
 async fn retrieve(
@@ -64,9 +64,7 @@ async fn main() {
         .await
         .unwrap();
 
-        sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await.unwrap();
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
     let router = Router::new()
         .route("/create_todo", post(add))

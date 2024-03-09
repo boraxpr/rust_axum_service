@@ -6,8 +6,15 @@ This is a simple Todo application built using the Axum framework, which is a web
 ## Features
 
 - RESTful API for managing todos
-- PostgreSQL integration using SQLx
+- PostgreSQL integration using [sqlx](https://github.com/launchbadge/sqlx)
+- [Tokio](https://github.com/tokio-rs/tokio) runtime
+- sqlx-cli is used to manage database, schema migrations.
 - CORS (Cross-Origin Resource Sharing) support
+
+## Looking to add
+
+- [Auth](https://github.com/tokio-rs/axum/tree/master/examples/auth)
+- Change from simple todos to be Personal blog : Because Static site generation (SSG) site does not support realtime post updates. Sometimes, I need to update my blog away from my computer. Also, I want to create a full stack web as a project to demonstrate my skills.
 
 ## Getting Started
 
