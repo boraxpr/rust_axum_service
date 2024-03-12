@@ -1,4 +1,4 @@
-version: '0.1'
+version: '3.8'
 services:
   postgresql:
     image: 'postgres'
@@ -9,16 +9,13 @@ services:
     ports:
       - '5432:5432'
 
-  redis:
-    image: 'redis'
-
   server:
     build:
       context: .
-      dockerfile: /backend/Dockerfile
+      dockerfile: ./backend/Dockerfile
     ports:
-      - '8000:8000'
+      - '7070:7070'
     depends_on:
       - postgresql
-      - redis
+
     
