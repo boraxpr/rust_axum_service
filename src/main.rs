@@ -72,7 +72,11 @@ async fn main() {
         .await
         .unwrap();
 
-    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+    if let Ok(environment) = env::var("ENV") {
+        if environment == "DEV" {
+            sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+        }
+    }
 
     let router = Router::new()
         .route("/create_todo", post(add))
