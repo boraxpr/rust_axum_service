@@ -12,4 +12,5 @@ WORKDIR /usr/src/rust_axum_service
 
 COPY --from=builder /usr/src/rust_axum_service/target/release/boraxpr .
 
+EXPOSE 8080
 CMD ["./boraxpr"]
