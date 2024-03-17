@@ -123,6 +123,6 @@ struct TodoNew {
 
 #[derive(Serialize, FromRow)]
 struct Todo {
-    pub id: i32,
+    pub id: i64,
     pub note: String,
 }
