@@ -6,6 +6,8 @@ COPY . .
 
 RUN cargo install cargo-watch
 
+RUN cargo install sqlx-cli
+
 EXPOSE 7070
 
-CMD ["cargo", "watch", "-x", "run"]
+CMD ["sh", "-c", "sqlx migrate run && cargo watch -x run"]

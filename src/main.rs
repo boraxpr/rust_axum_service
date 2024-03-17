@@ -13,6 +13,7 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::{FromRow, PgPool};
 use std::env;
 use tower_http::cors::CorsLayer;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 async fn retrieve(
     Path(id): Path<i64>,
@@ -55,6 +56,13 @@ async fn add(
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "example_tokio_postgres=debug".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
@@ -72,13 +80,35 @@ async fn main() {
         .route("/todos", get(bulk_retreive))
         .layer(
             CorsLayer::new()
-                .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
+                .allow_origin(
+                    env::var("ALLOW_ORIGIN_URL")
+                        .expect("ALLOW_ORIGIN_URL must be set")
+                        .parse::<HeaderValue>()
+                        .unwrap(),
+                )
                 .allow_methods([Method::GET, Method::POST]) // Specify the allowed HTTP methods
                 .allow_headers([AUTHORIZATION, ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN]), // Specify the allowed request headers
         )
         .with_state(pool);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:7070").await.unwrap();
+    // Port management
+    let mut port: u16 = 8080;
+    match env::var("PORT") {
+        Ok(p) => {
+            match p.parse::<u16>() {
+                Ok(n) => {
+                    port = n;
+                }
+                Err(_e) => {}
+            };
+        }
+        Err(_e) => {}
+    };
+
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
+        .await
+        .unwrap();
+    tracing::debug!("Listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, router).await.unwrap();
 }
 
