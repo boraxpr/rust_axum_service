@@ -9,13 +9,10 @@ use axum::{
 };
 use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPoolOptions;
-use sqlx::{FromRow, PgPool};
-use tower_governor::GovernorLayer;
-
-use std::env;
-use std::time::Duration;
-use tower_governor::governor::GovernorConfigBuilder;
+use sqlx::{postgres::PgPoolOptions, FromRow, PgPool};
+use std::net::SocketAddr;
+use std::{env, time::Duration};
+use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 use tower_http::cors::CorsLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -28,7 +25,9 @@ async fn retrieve(
         .fetch_one(&pool)
         .await
     {
-        Ok(todo) => Ok((StatusCode::OK, Json(todo))),
+        Ok(todo) => {
+            Ok((StatusCode::OK, Json(todo)))
+        }
         Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
     }
 }
@@ -60,6 +59,7 @@ async fn add(
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+    // TODO: Fix tracing
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -68,7 +68,8 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    // governor
+    // governor default uses PeerIPKeyExtractor - behind reverse proxy, it will take all requests as if it's from the same IP
+    // Manually config READ https://github.com/benwis/tower-governor/
     let governor_config = Box::new(
         GovernorConfigBuilder::default()
             .per_second(2)
@@ -76,7 +77,8 @@ async fn main() {
             .finish()
             .unwrap(),
     );
-
+    // TODO: on a nice day, try secure preset
+    // let governor_config = Box::new(GovernorConfig::secure());
     let governor_limiter = governor_config.limiter().clone();
     let interval = Duration::from_secs(60);
     // a separate background task to clean up
@@ -104,6 +106,9 @@ async fn main() {
         .route("/create_todo", post(add))
         .route("/todos/:id", get(retrieve))
         .route("/todos", get(bulk_retreive))
+        .layer(GovernorLayer {
+            config: Box::leak(governor_config),
+        })
         .layer(
             CorsLayer::new()
                 .allow_origin(
@@ -115,9 +120,6 @@ async fn main() {
                 .allow_methods([Method::GET, Method::POST]) // Specify the allowed HTTP methods
                 .allow_headers([AUTHORIZATION, ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN]), // Specify the allowed request headers
         )
-        .layer(GovernorLayer {
-            config: Box::leak(governor_config),
-        })
         .with_state(pool);
 
     // Port management
@@ -138,7 +140,12 @@ async fn main() {
         .await
         .unwrap();
     tracing::debug!("Listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, router).await.unwrap();
+    axum::serve(
+        listener,
+        router.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
 }
 
 #[derive(Deserialize)]

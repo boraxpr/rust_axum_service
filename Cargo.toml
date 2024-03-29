@@ -13,4 +13,4 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 sqlx = { version = "0.7.3", features = ["postgres", "runtime-tokio-rustls"] }
 tower-http = { version = "0.5.1", features = ["cors"] }
 dotenv = "0.15.0"
-tower_governor = "0.3.2"
+tower_governor = {version = "0.3.2" , features = ["tracing"]}
