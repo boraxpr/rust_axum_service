@@ -11,7 +11,11 @@ use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{FromRow, PgPool};
+use tower_governor::GovernorLayer;
+
 use std::env;
+use std::time::Duration;
+use tower_governor::governor::GovernorConfigBuilder;
 use tower_http::cors::CorsLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -64,10 +68,28 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    // governor
+    let governor_config = Box::new(
+        GovernorConfigBuilder::default()
+            .per_second(2)
+            .burst_size(5)
+            .finish()
+            .unwrap(),
+    );
+
+    let governor_limiter = governor_config.limiter().clone();
+    let interval = Duration::from_secs(60);
+    // a separate background task to clean up
+    std::thread::spawn(move || loop {
+        std::thread::sleep(interval);
+        tracing::info!("rate limiting storage size: {}", governor_limiter.len());
+        governor_limiter.retain_recent();
+    });
+
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     let pool = PgPoolOptions::new()
-        .max_connections(2)
+        .max_connections(1)
         .connect(&database_url)
         .await
         .unwrap();
@@ -93,6 +115,9 @@ async fn main() {
                 .allow_methods([Method::GET, Method::POST]) // Specify the allowed HTTP methods
                 .allow_headers([AUTHORIZATION, ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN]), // Specify the allowed request headers
         )
+        .layer(GovernorLayer {
+            config: Box::leak(governor_config),
+        })
         .with_state(pool);
 
     // Port management
