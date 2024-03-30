@@ -25,9 +25,7 @@ async fn retrieve(
         .fetch_one(&pool)
         .await
     {
-        Ok(todo) => {
-            Ok((StatusCode::OK, Json(todo)))
-        }
+        Ok(todo) => Ok((StatusCode::OK, Json(todo))),
         Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
     }
 }
@@ -59,7 +57,6 @@ async fn add(
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    // TODO: Fix tracing
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
