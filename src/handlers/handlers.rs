@@ -1,8 +1,13 @@
 use axum::{extract::Path, extract::State, http::StatusCode, response::IntoResponse, Json};
 
+use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 
-use crate::{Todo, TodoNew};
+#[derive(Serialize, FromRow, Deserialize)]
+pub struct Todo {
+    pub id: i64,
+    pub note: String,
+}
 
 pub async fn retrieve(
     Path(id): Path<i64>,
@@ -32,7 +37,7 @@ pub async fn bulk_retreive(
 
 pub async fn add(
     State(pool): State<PgPool>,
-    Json(data): Json<TodoNew>,
+    Json(data): Json<Todo>,
 ) -> Result<impl IntoResponse, impl IntoResponse> {
     match sqlx::query_as::<_, Todo>("INSERT INTO TODO (note) VALUES ($1) RETURNING id, note")
         .bind(&data.note)

@@ -2,16 +2,12 @@ mod handlers;
 use axum::http::header::{ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION};
 use axum::http::{HeaderValue, Method};
 use axum::{
-    extract::{Path, State},
-    http::StatusCode,
-    response::IntoResponse,
     routing::{get, post},
-    Json, Router,
+    Router,
 };
 use dotenv::dotenv;
 use handlers::{add, bulk_retreive, retrieve};
-use serde::{Deserialize, Serialize};
-use sqlx::{postgres::PgPoolOptions, FromRow, PgPool};
+use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use std::{env, time::Duration};
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
@@ -111,14 +107,4 @@ async fn main() {
     )
     .await
     .unwrap();
-}
-#[derive(Deserialize)]
-struct TodoNew {
-    pub note: String,
-}
-
-#[derive(Serialize, FromRow)]
-struct Todo {
-    pub id: i64,
-    pub note: String,
 }
