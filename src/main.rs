@@ -1,25 +1,23 @@
 mod handlers;
 
-use axum::body::{Body, Bytes};
-use axum::extract::{self, Request};
-use axum::http::header::{ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION};
-use axum::http::{HeaderValue, Method, Response, StatusCode};
-use axum::middleware::Next;
-use axum::response::IntoResponse;
 use axum::{
+    body::Body,
+    extract::Request,
+    http::{
+        header::{ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION},
+        HeaderValue, Method, Response,
+    },
     routing::{get, post},
     Router,
 };
 use dotenv::dotenv;
 use handlers::{add, bulk_retrieve, retrieve};
 use sqlx::postgres::PgPoolOptions;
-use std::net::SocketAddr;
-use std::{env, time::Duration};
+use std::{env, net::SocketAddr, time::Duration};
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
-use tower_http::cors::CorsLayer;
-use tower_http::trace::DefaultOnFailure;
 use tower_http::{
-    trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
+    cors::CorsLayer,
+    trace::{DefaultOnFailure, DefaultOnRequest, TraceLayer},
     LatencyUnit,
 };
 use tracing::{Level, Span};

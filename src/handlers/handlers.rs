@@ -1,4 +1,9 @@
-use axum::{extract::Path, extract::State, http::StatusCode, response::IntoResponse, Json};
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+    response::IntoResponse,
+    Json,
+};
 
 use serde::{
     ser::{Serialize, SerializeStruct, Serializer},
