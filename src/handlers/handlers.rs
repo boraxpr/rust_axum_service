@@ -44,7 +44,7 @@ pub async fn retrieve(
     }
 }
 
-pub async fn bulk_retreive(
+pub async fn bulk_retrieve(
     State(pool): State<PgPool>,
 ) -> Result<impl IntoResponse, impl IntoResponse> {
     match sqlx::query_as::<_, Todo>("SELECT * FROM TODO")

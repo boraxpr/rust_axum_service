@@ -1,3 +1,3 @@
 pub mod handlers;
 
-pub use handlers::{add, bulk_retreive, retrieve};
+pub use handlers::{add, bulk_retrieve, retrieve};

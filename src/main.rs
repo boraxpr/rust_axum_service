@@ -6,7 +6,7 @@ use axum::{
     Router,
 };
 use dotenv::dotenv;
-use handlers::{add, bulk_retreive, retrieve};
+use handlers::{add, bulk_retrieve, retrieve};
 use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use std::{env, time::Duration};
@@ -66,7 +66,7 @@ async fn main() {
     let router = Router::new()
         .route("/create_todo", post(add))
         .route("/todos/:id", get(retrieve))
-        .route("/todos", get(bulk_retreive))
+        .route("/todos", get(bulk_retrieve))
         .layer(GovernorLayer {
             config: Box::leak(governor_config),
         })
