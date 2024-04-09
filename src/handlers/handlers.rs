@@ -51,11 +51,7 @@ pub async fn bulk_retrieve(
         .fetch_all(&pool)
         .await
     {
-        Ok(todos) => {
-            let todos = Json(todos);
-            tracing::info!("todos: {:#?}", todos);
-            Ok((StatusCode::OK, todos))
-        }
+        Ok(todos) => Ok((StatusCode::OK, Json(todos))),
         Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
     }
 }
