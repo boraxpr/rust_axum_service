@@ -1,6 +1,11 @@
 mod handlers;
+
+use axum::body::{Body, Bytes};
+use axum::extract::{self, Request};
 use axum::http::header::{ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION};
-use axum::http::{HeaderValue, Method};
+use axum::http::{HeaderValue, Method, Response, StatusCode};
+use axum::middleware::Next;
+use axum::response::IntoResponse;
 use axum::{
     routing::{get, post},
     Router,
@@ -12,8 +17,13 @@ use std::net::SocketAddr;
 use std::{env, time::Duration};
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 use tower_http::cors::CorsLayer;
+use tower_http::trace::DefaultOnFailure;
+use tower_http::{
+    trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
+    LatencyUnit,
+};
+use tracing::{Level, Span};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
 #[tokio::main]
 async fn main() {
     dotenv().ok();
@@ -70,6 +80,30 @@ async fn main() {
         .layer(GovernorLayer {
             config: Box::leak(governor_config),
         })
+        .layer(
+            // https://docs.rs/tower-http/0.1.1/tower_http/trace/index.html
+            // Tracing layer is used for tracing the flow of the request
+            // However, Body can't be logged because the body is an async stream, in order to log it, the whole thing need to be buffered
+            // Which does not work for infinite incoming stream
+            // https://github.com/hyperium/tonic/discussions/1133
+            // https://github.com/hyperium/tonic/discussions/1133
+            TraceLayer::new_for_http()
+                .make_span_with(|_request: &Request<Body>| {
+                    tracing::debug_span!("http-request", status_code = tracing::field::Empty,)
+                })
+                .on_request(DefaultOnRequest::new().level(Level::INFO))
+                .on_response(
+                    |response: &Response<Body>, _latency: Duration, span: &Span| {
+                        span.record("status_code", &tracing::field::display(response.status()));
+                        tracing::debug!("response generated")
+                    },
+                )
+                .on_failure(
+                    DefaultOnFailure::new()
+                        .level(Level::ERROR)
+                        .latency_unit(LatencyUnit::Micros),
+                ),
+        )
         .layer(
             CorsLayer::new()
                 .allow_origin(

@@ -11,6 +11,6 @@ serde = { version = "1.0.196", features = ["derive"] }
 uuid = { version = "1.7.0", features = ["v4"] }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 sqlx = { version = "0.7.3", features = ["postgres", "runtime-tokio-rustls"] }
-tower-http = { version = "0.5.1", features = ["cors"] }
+tower-http = { version = "0.5.1", features = ["cors","trace"] }
 dotenv = "0.15.0"
 tower_governor = {version = "0.3.2" , features = ["tracing"]}
