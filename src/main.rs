@@ -11,10 +11,11 @@ use axum::{
     Router,
 };
 use dotenv::dotenv;
+use governor::middleware::StateInformationMiddleware;
 use handlers::{add, bulk_retrieve, retrieve};
 use sqlx::postgres::PgPoolOptions;
-use std::{env, net::SocketAddr, time::Duration};
-use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
+use std::{env, net::SocketAddr, sync::Arc, time::Duration};
+use tower_governor::{governor::GovernorConfig, key_extractor::PeerIpKeyExtractor, GovernorLayer};
 use tower_http::{
     cors::CorsLayer,
     trace::{DefaultOnFailure, DefaultOnRequest, TraceLayer},
@@ -39,15 +40,21 @@ async fn main() {
 
     // governor default uses PeerIPKeyExtractor - behind reverse proxy, it will take all requests as if it's from the same IP
     // Manually config READ https://github.com/benwis/tower-governor/
-    let governor_config = Box::new(
-        GovernorConfigBuilder::default()
-            .per_second(2)
-            .burst_size(5)
-            .finish()
-            .unwrap(),
-    );
-    // TODO: on a nice day, try secure preset
-    // let governor_config = Box::new(GovernorConfig::secure());
+    // let governor_config = Box::new(
+    //     GovernorConfigBuilder::default()
+    //         .per_second(2)
+    //         .burst_size(5)
+    //         .finish()
+    //         .unwrap(),
+    // );
+    // Example of using preset : secure
+    // It's needed to specify key extractor and middleware
+    // However, the default middlewares are not available in the same crate (tower_governor) but it's must be imported from governor::middleware
+    // https://docs.rs/governor/0.6.3/governor/middleware/
+    let governor_config = Arc::new(GovernorConfig::<
+        PeerIpKeyExtractor,
+        StateInformationMiddleware,
+    >::secure());
     let governor_limiter = governor_config.limiter().clone();
     let interval = Duration::from_secs(60);
     // a separate background task to clean up
@@ -76,7 +83,7 @@ async fn main() {
         .route("/todos/:id", get(retrieve))
         .route("/todos", get(bulk_retrieve))
         .layer(GovernorLayer {
-            config: Box::leak(governor_config),
+            config: governor_config,
         })
         .layer(
             // https://docs.rs/tower-http/0.1.1/tower_http/trace/index.html
