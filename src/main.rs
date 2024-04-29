@@ -91,7 +91,6 @@ async fn main() {
             // However, Body can't be logged because the body is an async stream, in order to log it, the whole thing need to be buffered
             // Which does not work for infinite incoming stream
             // https://github.com/hyperium/tonic/discussions/1133
-            // https://github.com/hyperium/tonic/discussions/1133
             TraceLayer::new_for_http()
                 .make_span_with(|_request: &Request<Body>| {
                     tracing::debug_span!("http-request", status_code = tracing::field::Empty,)
