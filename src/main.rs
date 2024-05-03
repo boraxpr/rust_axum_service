@@ -12,7 +12,7 @@ use axum::{
 };
 use dotenv::dotenv;
 use governor::middleware::StateInformationMiddleware;
-use handlers::{add, bulk_retrieve, retrieve};
+use handlers::{get as get_handler, get_all as get_all_handler, save as save_handler};
 use sqlx::postgres::PgPoolOptions;
 use std::{env, net::SocketAddr, sync::Arc, time::Duration};
 use tower_governor::{governor::GovernorConfig, key_extractor::PeerIpKeyExtractor, GovernorLayer};
@@ -79,9 +79,9 @@ async fn main() {
     }
 
     let router = Router::new()
-        .route("/create_todo", post(add))
-        .route("/todos/:id", get(retrieve))
-        .route("/todos", get(bulk_retrieve))
+        .route("/create_todo", post(save_handler))
+        .route("/todos/:id", get(get_handler))
+        .route("/todos", get(get_all_handler))
         .layer(GovernorLayer {
             config: governor_config,
         })
