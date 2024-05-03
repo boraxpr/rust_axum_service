@@ -79,9 +79,8 @@ async fn main() {
     }
 
     let router = Router::new()
-        .route("/create_todo", post(save_handler))
+        .route("/todos", get(get_all_handler).post(save_handler))
         .route("/todos/:id", get(get_handler))
-        .route("/todos", get(get_all_handler))
         .layer(GovernorLayer {
             config: governor_config,
         })
