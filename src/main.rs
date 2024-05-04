@@ -145,6 +145,8 @@ async fn main() {
     tracing::debug!("Listening on {}", listener.local_addr().unwrap());
     axum::serve(
         listener,
+        // into_make_service_with_connect_info is required for tower_governor/governor PeerIpKeyExtractor; in order to ratelimit by IP address, it must be used to parse the peer ip address for tower to find.
+        // READ https://github.com/benwis/tower-governor; Common pitfalls
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
     .await
