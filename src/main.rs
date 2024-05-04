@@ -2,18 +2,19 @@ mod handlers;
 
 use axum::{
     body::Body,
-    extract::Request,
+    extract::{Request, State},
     http::{
         header::{ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION},
-        HeaderValue, Method, Response,
+        HeaderValue, Method, Response, StatusCode,
     },
+    response::IntoResponse,
     routing::{get, post},
     Router,
 };
 use dotenv::dotenv;
 use governor::middleware::StateInformationMiddleware;
 use handlers::{get as get_handler, get_all as get_all_handler, save as save_handler};
-use sqlx::postgres::PgPoolOptions;
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::{env, net::SocketAddr, sync::Arc, time::Duration};
 use tower_governor::{governor::GovernorConfig, key_extractor::PeerIpKeyExtractor, GovernorLayer};
 use tower_http::{
@@ -78,6 +79,7 @@ async fn main() {
         }
     }
 
+    // TODO: Pass DAO to all handler manually or deal with shared state
     let router = Router::new()
         .route("/todos", get(get_all_handler).post(save_handler))
         .route("/todos/:id", get(get_handler))
@@ -120,6 +122,9 @@ async fn main() {
         )
         .with_state(pool);
 
+    let test_router = Router::new().route("/test", get(test_handler));
+
+    let app: Router<()> = Router::new().merge(router).merge(test_router);
     // Port management
     let mut port: u16 = 8080;
     match env::var("PORT") {
@@ -140,8 +145,12 @@ async fn main() {
     tracing::debug!("Listening on {}", listener.local_addr().unwrap());
     axum::serve(
         listener,
-        router.into_make_service_with_connect_info::<SocketAddr>(),
+        app.into_make_service_with_connect_info::<SocketAddr>(),
     )
     .await
     .unwrap();
+}
+
+async fn test_handler() -> Result<impl IntoResponse, impl IntoResponse> {
+    Ok::<(axum::http::StatusCode, &str), ()>((StatusCode::OK, "OK"))
 }
