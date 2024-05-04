@@ -35,7 +35,6 @@ impl Serialize for Todo {
     }
 }
 
-// NOTE: Due to how axum do pattern matching and url extraction. Generic Dao handler can't be done. (At least can't be done easily enough such that it seems worth it)
 pub async fn get(
     Path(id): Path<i64>,
     State(pool): State<PgPool>,
