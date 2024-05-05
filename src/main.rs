@@ -14,7 +14,7 @@ use axum::{
 use dotenv::dotenv;
 use governor::middleware::StateInformationMiddleware;
 use handlers::{create_todo, get_all_todo, get_todo_by_id};
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use sqlx::postgres::PgPoolOptions;
 use std::{env, net::SocketAddr, sync::Arc, time::Duration};
 use tower_governor::{governor::GovernorConfig, key_extractor::PeerIpKeyExtractor, GovernorLayer};
 use tower_http::{
