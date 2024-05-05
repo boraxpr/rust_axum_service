@@ -35,7 +35,7 @@ impl Serialize for Todo {
     }
 }
 
-pub async fn get(
+pub async fn get_todo_by_id(
     Path(id): Path<i64>,
     State(pool): State<PgPool>,
 ) -> Result<impl IntoResponse, impl IntoResponse> {
@@ -49,7 +49,9 @@ pub async fn get(
     }
 }
 
-pub async fn get_all(State(pool): State<PgPool>) -> Result<impl IntoResponse, impl IntoResponse> {
+pub async fn get_all_todo(
+    State(pool): State<PgPool>,
+) -> Result<impl IntoResponse, impl IntoResponse> {
     match sqlx::query_as::<_, Todo>("SELECT * FROM TODO")
         .fetch_all(&pool)
         .await
@@ -59,7 +61,7 @@ pub async fn get_all(State(pool): State<PgPool>) -> Result<impl IntoResponse, im
     }
 }
 
-pub async fn save(
+pub async fn create_todo(
     State(pool): State<PgPool>,
     Json(data): Json<Todo>,
 ) -> Result<impl IntoResponse, impl IntoResponse> {

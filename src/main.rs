@@ -2,18 +2,18 @@ mod handlers;
 
 use axum::{
     body::Body,
-    extract::{Request, State},
+    extract::Request,
     http::{
         header::{ACCEPT, ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION},
         HeaderValue, Method, Response, StatusCode,
     },
     response::IntoResponse,
-    routing::{get, post},
+    routing::get,
     Router,
 };
 use dotenv::dotenv;
 use governor::middleware::StateInformationMiddleware;
-use handlers::{get as get_handler, get_all as get_all_handler, save as save_handler};
+use handlers::{create_todo, get_all_todo, get_todo_by_id};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::{env, net::SocketAddr, sync::Arc, time::Duration};
 use tower_governor::{governor::GovernorConfig, key_extractor::PeerIpKeyExtractor, GovernorLayer};
@@ -81,8 +81,8 @@ async fn main() {
 
     // TODO: Pass DAO to all handler manually or deal with shared state
     let router = Router::new()
-        .route("/todos", get(get_all_handler).post(save_handler))
-        .route("/todos/:id", get(get_handler))
+        .route("/todos", get(get_all_todo).post(create_todo))
+        .route("/todos/:id", get(get_todo_by_id))
         .layer(GovernorLayer {
             config: governor_config,
         })
