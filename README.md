@@ -7,6 +7,7 @@ V1 : This is a simple Todo application built using the Axum framework, which is 
 
 - RESTful API for managing todos
 - PostgreSQL integration using [sqlx](https://github.com/launchbadge/sqlx)
+- Lightweight DI via Axum's with_state() and extractors — supports the DI pattern without a dedicated container.
 - [Tokio](https://github.com/tokio-rs/tokio) runtime
 - sqlx-cli is used to manage database, schema migrations.
 - CORS (Cross-Origin Resource Sharing) support
