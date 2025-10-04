@@ -1,21 +1,24 @@
-version: '3.8'
 services:
   postgresql:
-    image: 'postgres'
+    image: "postgres"
     environment:
-      POSTGRES_USER: 'postgres'
-      POSTGRES_PASSWORD: 'postgres'
-      POSTGRES_DB: 'postgres'
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "postgres"
     ports:
-      - '5432:5432'
+      - "5432:5432"
 
   server:
     build:
       context: .
       dockerfile: ./backend/Dockerfile
+    environment:
+      - ENV=DEV
+      - DATABASE_URL=postgres://postgres:postgres@postgresql:5432
+      - PORT=7070
+      - ALLOW_ORIGIN_URL=http://axum-frontend:3000
+      - RUST_LOG=debug
     ports:
-      - '7070:7070'
+      - "7070:7070"
     depends_on:
       - postgresql
-
-    
