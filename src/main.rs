@@ -33,7 +33,8 @@ async fn main() {
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
                 // https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter.html#example-syntax
                 // target_module::module=level
-                "boraxpr=trace,tower_http=trace,axum::rejection=trace,sqlx::query=trace".into()
+                "boraxpr_rust_axum=trace,tower_http=trace,axum::rejection=trace,sqlx::query=trace"
+                    .into()
             }),
         )
         .with(tracing_subscriber::fmt::layer())
